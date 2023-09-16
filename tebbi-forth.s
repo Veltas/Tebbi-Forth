@@ -368,6 +368,37 @@
    add   $4, %ebx
    ret
 
+   header compare, "COMPARE", 0
+   push  %esi
+   push  %edi
+   mov   8(%ebx), %esi
+   mov   (%ebx), %edi
+   mov   %eax, %ecx
+   mov   4(%ebx), %edx
+   cmp   %edx, %eax
+   cmovg %edx, %ecx
+   repe cmpsb
+   jne   4f
+   cmp   %edx, %eax
+   jne   5f
+   xor   %eax, %eax
+   jmp   6f
+5:
+   jl    5f
+   mov   $-1, %eax
+   jmp   6f
+5: mov   $1, %eax
+   jmp   6f
+4: jb    5f
+   mov   $1, %eax
+   jmp   6f
+5: mov   $-1, %eax
+   jmp   6f
+6: add   $12, %ebx
+   pop   %edi
+   pop   %esi
+   ret
+
    # : COUNT ( a-an)   DUP 1+ SWAP C@ ;
    header count, "COUNT", 0
    call  dup
