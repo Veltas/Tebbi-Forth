@@ -612,8 +612,8 @@
    call  c_code_comma
    ret
 
-   .globl cold
-   header cold, "COLD", 0
+   .globl start
+   header start, "START", 0
    mov   %esp, (args__data)
    mov   %esp, (rp0__data)
    mov   $4, %eax

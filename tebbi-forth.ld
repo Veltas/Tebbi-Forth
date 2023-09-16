@@ -24,8 +24,6 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-ENTRY(cold)
-
 SECTIONS {
    . = 0x10000;
    .text ALIGN(64) : { *(.text) }
