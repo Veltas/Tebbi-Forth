@@ -349,6 +349,15 @@
    add   $4, %ebx
    ret
 
+   # : NAME>STRING ( a-an)   8 +  COUNT  $3F AND ;
+   header name_to_string, "NAME>STRING", 0
+   literal 8
+   call  plus
+   call  count
+   literal 0x3F
+   call  and
+   ret
+
    # : CCODE, ( c)   C-HERE @  1 C-HERE +!  C! ;
    header c_code_comma, "CCODE,", 0
    call  c_here
