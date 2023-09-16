@@ -403,6 +403,33 @@
    #          EXIT
    #       THEN
    #    REPEAT ;
+   header find_tick, "FIND'", 0
+   call  current
+   call  fetch
+   call  fetch
+4: call  dup
+   branch 4f
+   call  two_dup
+   call  swap
+   call  count
+   call  rot
+   call  name_to_string
+   call  compare
+   call  zero_equals
+   branch 5f
+   call  nip
+   call  dup
+   call  name_to_interpret
+   call  swap
+   call  imm_question
+   branch 6f
+   literal -1
+   jmp   7f
+6: branch 7f
+   literal 1
+7: ret
+5: jmp 4b
+4: ret
 
    # : FIND ( a - a 0 | e 1 | e -1 )   'FIND @ EXECUTE ;
    header find, "FIND", 0
