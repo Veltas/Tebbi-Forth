@@ -399,12 +399,11 @@
    pop   %esi
    ret
 
-   # : COUNT ( a-an)   DUP 1+ SWAP C@ ;
    header count, "COUNT", 0
-   call  dup
-   call  one_plus
-   call  swap
-   call  c_fetch
+   sub   $4, %ebx
+   lea   1(%eax), %ecx
+   mov   %ecx, (%ebx)
+   movzxb (%eax), %eax
    ret
 
    # : NAME>STRING ( a-an)   8 +  COUNT  $3F AND ;
