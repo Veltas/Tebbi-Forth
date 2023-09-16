@@ -26,18 +26,16 @@ TARGET = tf
 OBJS = tebbi-forth.o
 LINKER_SCRIPT = tebbi-forth.ld
 
-ifeq ($(shell uname -s),Linux)
-   ifneq ($(shell uname -p),i686)
-      AS = i686-linux-gnu-as
-      LD = i686-linux-gnu-ld
-   endif
+ifeq ($(shell uname -sp),Linux aarch64)
+   AS = i686-linux-gnu-as
+   LD = i686-linux-gnu-ld
 endif
 
 $(TARGET): $(OBJS) $(LINKER_SCRIPT)
-	$(LD) -T$(LINKER_SCRIPT) $(OBJS) -o$@
+	$(LD) -melf_i386 -T$(LINKER_SCRIPT) $(OBJS) -o$@
 
 clean:
 	-rm $(OBJS) $(TARGET)
 
 %.o: %.s
-	$(AS) $< -o$@
+	$(AS) --32 $< -o$@
