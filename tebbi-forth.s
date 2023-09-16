@@ -701,7 +701,7 @@
 
    # : EXIT   0xC1 CCODE, ; IMMEDIATE
    header exit, "EXIT", IMM
-   literal 0xC1
+   literal 0xC3
    call  c_code_comma
    ret
 
