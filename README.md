@@ -1,8 +1,8 @@
 tebbi-forth
 ===========
 
-*In development, this is not finished but the code as-is is
-available for viewing.*
+**In development, this is not finished but the code as-is is
+available for viewing.**
 
 x86 Linux Forth, ANS Forth, Forth 2012, 2022 draft.
 
