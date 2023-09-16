@@ -606,7 +606,7 @@
    call  quit
    ret
 
-   # : EXIT   0xC1 CCODE, ;
+   # : EXIT   0xC1 CCODE, ; IMMEDIATE
    header exit, "EXIT", IMM
    literal 0xC1
    call  c_code_comma
