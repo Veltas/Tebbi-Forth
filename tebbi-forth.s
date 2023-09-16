@@ -349,6 +349,14 @@
    add   $4, %ebx
    ret
 
+   # : COUNT ( a-an)   DUP 1+ SWAP C@ ;
+   header count, "COUNT", 0
+   call  dup
+   call  one_plus
+   call  swap
+   call  c_fetch
+   ret
+
    # : NAME>STRING ( a-an)   8 +  COUNT  $3F AND ;
    header name_to_string, "NAME>STRING", 0
    literal 8
