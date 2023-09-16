@@ -1,4 +1,4 @@
-tebbi-forth
+Tebbi Forth
 ===========
 
 **In development, this is not finished but the code as-is is
