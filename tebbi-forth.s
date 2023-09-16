@@ -294,6 +294,25 @@
    add   $4, %ebx
    ret
 
+   header and, "AND", 0
+   and   (%ebx), %eax
+   add   $4, %ebx
+   ret
+
+   header or, "OR", 0
+   or    (%ebx), %eax
+   add   $4, %ebx
+   ret
+
+   header xor, "XOR", 0
+   xor   (%ebx), %eax
+   add   $4, %ebx
+   ret
+
+   header invert, "INVERT", 0
+   not   %eax
+   ret
+
    header fetch, "@", 0
    mov   (%eax), %eax
    ret
