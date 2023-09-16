@@ -415,6 +415,13 @@
    call  and
    ret
 
+   # : NAME>INTERPRET ( a-e)   4 + @ ;
+   header name_to_interpret, "NAME>INTERPRET", 0
+   literal 4
+   call  plus
+   call  fetch
+   ret
+
    # : CCODE, ( c)   C-HERE @  1 C-HERE +!  C! ;
    header c_code_comma, "CCODE,", 0
    call  c_here
