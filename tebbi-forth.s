@@ -437,6 +437,29 @@
    movzxb (%eax), %eax
    ret
 
+   # : ALIGN   HERE ALIGNED H ! ;
+   header align, "ALIGN", 0
+   call  here
+   call  aligned
+   call  h
+   call  store
+   ret
+
+   # : CALIGN   CHERE @ ALIGNED CHERE ! ;
+   header c_align, "CALIGN", 0
+   call  c_here
+   call  fetch
+   call  aligned
+   call  c_here
+   call  store
+   ret
+
+   # : ALLOT ( n)   H +! ;
+   header   allot, "ALLOT", 0
+   call  h
+   call  plus_store
+   ret
+
    # : TYPE   STDOUT SYS-WRITE ;
    header type, "TYPE", 0
    call  stdout
