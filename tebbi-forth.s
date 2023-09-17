@@ -455,7 +455,7 @@
    ret
 
    # : ALLOT ( n)   H +! ;
-   header   allot, "ALLOT", 0
+   header allot, "ALLOT", 0
    call  h
    call  plus_store
    ret
