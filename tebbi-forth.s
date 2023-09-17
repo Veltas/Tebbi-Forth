@@ -430,6 +430,20 @@
    movzxb (%eax), %eax
    ret
 
+   # : (ABORT") ( ?an)
+   #    ROT IF SPACE TYPE CR ABORT
+   #    ELSE 2DROP THEN ;
+   header raw_abort_quote, "(ABORT\")", 0
+   call  rot
+   branch 4f
+   call  space
+   call  type
+   call  cr
+   call  abort
+   jmp   5f
+4: call  two_drop
+5: ret
+
    # : NAME>STRING ( a-an)   8 +  COUNT  $3F AND ;
    header name_to_string, "NAME>STRING", 0
    literal 8
