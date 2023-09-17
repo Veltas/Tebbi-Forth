@@ -120,6 +120,8 @@
    constant bl, "BL", 0x20
    constant tib_size, "TIB-SIZE", TIB_SIZE
    constant sp0, "SP0", sp0_init
+   constant stdin, "STDIN", 0
+   constant stdout, "STDOUT", 1
 
    variable c_here, "CHERE", c_here_init
    variable h, "H", h_init
@@ -198,6 +200,11 @@
    sub   $8, %ebx
    mov   %eax, 4(%ebx)
    mov   %ecx, (%ebx)
+   ret
+
+   header two_drop, "2DROP", 0
+   mov   4(%ebx), %eax
+   add   $8, %ebx
    ret
 
    header one_plus, "1+", 0
@@ -428,6 +435,24 @@
    lea   1(%eax), %ecx
    mov   %ecx, (%ebx)
    movzxb (%eax), %eax
+   ret
+
+   # : TYPE   STDOUT SYS-WRITE ;
+   header type, "TYPE", 0
+   call  stdout
+   call  sys_write
+   ret
+
+   # : SPACE   S" " TYPE ;
+   header space, "SPACE", 0
+   string " "
+   call  type
+   ret
+
+   # : CR   S\" \n" TYPE ;
+   header cr, "CR", 0
+   string "\n"
+   call  type
    ret
 
    # : (ABORT") ( ?an)
