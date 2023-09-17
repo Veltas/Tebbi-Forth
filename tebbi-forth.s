@@ -399,6 +399,30 @@
    pop   %esi
    ret
 
+   header cmove, "CMOVE", 0
+   push  %esi
+   push  %edi
+   mov   4(%ebx), %esi
+   mov   (%ebx), %edi
+   mov   %eax, %ecx
+   rep movsb
+   mov   8(%ebx), %eax
+   add   $12, %ebx
+   ret
+
+   header cmove_up, "CMOVE>", 0
+   push  %esi
+   push  %edi
+   mov   4(%ebx), %esi
+   mov   (%ebx), %edi
+   mov   %eax, %ecx
+   std
+   rep movsb
+   cld
+   mov   8(%ebx), %eax
+   add   $12, %ebx
+   ret
+
    header count, "COUNT", 0
    sub   $4, %ebx
    lea   1(%eax), %ecx
@@ -420,6 +444,16 @@
    literal 4
    call  plus
    call  fetch
+   ret
+
+   # : IMM? ( a-?)   8 +  C@  $80 AND 0<> ;
+   header imm_question, "IMM?", 0
+   literal 8
+   call  plus
+   call  c_fetch
+   literal 0x80
+   call  and
+   call  zero_not_equals
    ret
 
    # : CCODE, ( c)   C-HERE @  1 C-HERE +!  C! ;
@@ -571,6 +605,42 @@
    call  aligned
    literal 8
    call  plus
+   ret
+
+   # : PARSE ( c-an)
+   #    TIB >IN @ + SWAP
+   #    >IN @ SWAP
+   #    BEGIN
+   #       PEEK-IN ?DUP WHILE
+   #       OVER <> WHILE
+   #       1 >IN +!
+   #    REPEAT THEN
+   #    DROP
+   #    >IN @ SWAP - ;
+   header parse, "PARSE", 0
+   call  tib
+   call  to_in
+   call  fetch
+   call  plus
+   call  swap
+   call  to_in
+   call  fetch
+   call  swap
+4: call  peek_in
+   call  question_dup
+   branch 4f
+   call  over
+   call  not_equals
+   branch 4f
+   literal 1
+   call  to_in
+   call  plus_store
+   jmp   4b
+4: call  drop
+   call  to_in
+   call  fetch
+   call  swap
+   call  minus
    ret
 
    # : WORD ( c-a)
