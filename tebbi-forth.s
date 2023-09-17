@@ -145,9 +145,31 @@
    mov   (exit_code__data), %ebx
    int   $0x80
 
-   # header sys_write, "SYS-WRITE", 0
+   header sys_write, "SYS-WRITE", 0
+   push  %ebx
+   push  %eax
+   mov   $4, %eax
+   mov   (%ebx), %edx
+   mov   4(%ebx), %ecx
+   mov   (%esp), %ebx
+   int   $0x80
+   pop   %ecx
+   pop   %ebx
+   add   $8, %ebx
+   ret
 
-   # header sys_read, "SYS-READ", 0
+   header sys_read, "SYS-READ", 0
+   push  %ebx
+   push  %eax
+   mov   $3, %eax
+   mov   (%ebx), %edx
+   mov   4(%ebx), %ecx
+   mov   (%esp), %ebx
+   int   $0x80
+   pop   %ecx
+   pop   %ebx
+   add   $8, %ebx
+   ret
 
    header drop, "DROP", 0
    mov   (%ebx), %eax
