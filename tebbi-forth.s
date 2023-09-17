@@ -133,7 +133,7 @@
    variable number_tib, "\#TIB", 0
    variable exit_code, "EXIT-CODE", 0
    variable args, "ARGS", 0
-   variable tick_find, "'FIND", raw_find
+   variable tick_find, "'FIND", find_tick
    variable tib, "TIB", 0
    .space   TIB_SIZE - 4
 
