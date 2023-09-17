@@ -461,27 +461,17 @@
    ret
 
    # : COMPILE, ( e)
-   #    5 CHERE +!
-   #    $E8 CHERE @ 5 - C!
-   #    CHERE @ -  CHERE @ 4 - ! ;
+   #    $E8 CCODE,
+   #    CHERE @ 4 +  -  CODE, ;
    header compile_comma, "COMPILE,", 0
-   literal 5
-   call  c_here
-   call  plus_store
    literal 0xE8
-   call  c_here
-   call  fetch
-   literal 5
-   call  minus
-   call  c_store
-   call  c_here
-   call  fetch
-   call  minus
+   call  c_code_comma
    call  c_here
    call  fetch
    literal 4
+   call  plus
    call  minus
-   call  store
+   call  code_comma
    ret
 
    # : TYPE   STDOUT SYS-WRITE ;
