@@ -134,6 +134,7 @@
    variable exit_code, "EXIT-CODE", 0
    variable args, "ARGS", 0
    variable tick_find, "'FIND", find_tick
+   variable tick_refill, "'REFILL", refill_tick
    variable tib, "TIB", 0
    .space   TIB_SIZE - 4
 
@@ -144,9 +145,9 @@
    mov   (exit_code__data), %ebx
    int   $0x80
 
-   header sys_write, "SYS-WRITE", 0
+   # header sys_write, "SYS-WRITE", 0
 
-   header sys_read, "SYS-READ", 0
+   # header sys_read, "SYS-READ", 0
 
    header drop, "DROP", 0
    mov   (%ebx), %eax
@@ -205,6 +206,28 @@
    header two_drop, "2DROP", 0
    mov   4(%ebx), %eax
    add   $8, %ebx
+   ret
+
+   header to_r, ">R", 0
+   pop   %ecx
+   push  %eax
+   push  %ecx
+   mov   (%ebx), %eax
+   add   $4, %ebx
+   ret
+
+   header r_from, "R>", 0
+   sub   $4, %ebx
+   mov   %eax, (%ebx)
+   pop   %ecx
+   pop   %eax
+   push  %ecx
+   ret
+
+   header rp_tick, "RP'", 0
+   sub   $4, %ebx
+   mov   %eax, (%ebx)
+   lea   4(%esp), %eax
    ret
 
    header one_plus, "1+", 0
@@ -474,10 +497,11 @@
    call  code_comma
    ret
 
-   # : TYPE   STDOUT SYS-WRITE ;
+   # : TYPE   STDOUT SYS-WRITE DROP ;
    header type, "TYPE", 0
    call  stdout
    call  sys_write
+   call  drop
    ret
 
    # : SPACE   S" " TYPE ;
@@ -775,6 +799,69 @@
    call  current
    call  fetch
    call  store
+   ret
+
+   # : KEY ( -c)   0 >R RP' 1 STDIN SYS-READ DROP R> ;
+   header key, "KEY", 0
+   literal_zero
+   call  to_r
+   call  rp_tick
+   literal 1
+   call  stdin
+   call  sys_read
+   call  drop
+   call  r_from
+   ret
+
+   # : REFILL' ( -?)
+   #    0 >IN !
+   #    0 #TIB !
+   #    0
+   #    BEGIN
+   #       #TIB @ TIB-SIZE @ < WHILE
+   #       DROP KEY
+   #       DUP 10 <> WHILE
+   #       TIB #TIB @ + C!
+   #       1 #TIB +!
+   #    REPEAT THEN
+   #    DROP -1 ;
+   header refill_tick, "REFILL'", 0
+   literal_zero
+   call  to_in
+   call  store
+   literal_zero
+   call  number_tib
+   call  store
+   literal_zero
+4: call  number_tib
+   call  fetch
+   call  tib_size
+   call  fetch
+   call  less_than
+   branch 4f
+   call  drop
+   call  key
+   call  dup
+   literal 10
+   branch 4f
+   call  tib
+   call  number_tib
+   call  fetch
+   call  plus
+   call  c_store
+   literal 1
+   call  number_tib
+   call  plus_store
+   jmp   4b
+4: call  drop
+   literal -1
+   ret
+
+   # : REFILL ( -?)   'REFILL @ EXECUTE ;
+   header refill, "REFILL", 0
+   call  tick_refill
+   call  fetch
+   call  execute
    ret
 
    # : GET ( -a)
