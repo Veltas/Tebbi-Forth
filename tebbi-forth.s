@@ -514,6 +514,35 @@
    call  swap
    ret
 
+   # : >NUMBER ( Nan-Nan)
+   #    BEGIN
+   #       DUP WHILE
+   #       OVER C@ IS-DIGIT? WHILE
+   #       OVER C@ DIGIT>NUMBER >R
+   #       2SWAP BASE @ UM* R> 0 D+ 2SWAP
+   #    REPEAT THEN ;
+   header to_number, ">NUMBER", 0
+4: call  dup
+   branch 4f
+   call  over
+   call  c_fetch
+   call  is_digit_question
+   branch 4f
+   call  over
+   call  c_fetch
+   call  digit_to_number
+   call  to_r
+   call  two_swap
+   call  base
+   call  fetch
+   call  u_m_star
+   call  r_from
+   literal_zero
+   call  d_plus
+   call  two_swap
+   jmp   4b
+4: ret
+
    # : ALIGN   HERE ALIGNED H ! ;
    header align, "ALIGN", 0
    call  here
