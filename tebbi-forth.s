@@ -83,10 +83,25 @@
    mov   $(\value\()), %eax
    .endm
 
+   .macro two_literal value
+   sub   $8, %ebx
+   mov   %eax, 4(%ebx)
+   mov   $(\value\()) & 0xFFFFFFFF, %ecx
+   mov   %ecx, (%ebx)
+   mov   $(\value\()) >> 32, %eax
+   .endm
+
    .macro literal_zero
    sub   $4, %ebx
    mov   %eax, (%ebx)
    xor   %eax, %eax
+   .endm
+
+   .macro two_literal_zero
+   sub   $8, %ebx
+   mov   %eax, 4(%ebx)
+   xor   %eax, %eax
+   mov   %eax, (%ebx)
    .endm
 
    .macro branch, else
@@ -893,8 +908,7 @@
    #       REFILL DROP
    #    REPEAT ;
    header get, "GET", 0
-5:
-   literal_zero
+5: literal_zero
    call  drop
    call  bl
    call  word
@@ -905,8 +919,219 @@
    call  refill
    call  drop
    jmp   5b
-6:
+6: ret
+
+   # : SEPARATOR? ( c-?)
+   #    CASE '.' OF ENDOF
+   #         ',' OF ENDOF
+   #         ''' OF ENDOF
+   #         '-' OF ENDOF
+   #         ':' OF ENDOF
+   #         DROP 0 EXIT ENDCASE
+   #    -1 ;
+   header separator_question, "SEPARATOR?", 0
+   literal '.'
+   raw_of 4f
+   jmp   5f
+4: literal ','
+   raw_of 4f
+   jmp   5f
+4: literal '\''
+   raw_of 4f
+   jmp   5f
+4: literal '-'
+   raw_of 4f
+   jmp   5f
+4: literal ':'
+   raw_of 4f
+   jmp   5f
+   call  drop
+   literal_zero
    ret
+5: literal -1
+   ret
+
+   # : HUH?   SPACE 'WORD COUNT TYPE ." ?" ABORT ;
+   header huh_question, "HUH?", 0
+   call  space
+   call  tick_word
+   call  count
+   call  type
+   string "?"
+   call  type
+   call  abort
+   ret
+
+   # : DNUMBER ( Nan-N)
+   #    BEGIN >NUMBER DUP WHILE
+   #       OVER C@ SEPARATOR? 0= IF HUH? THEN
+   #       1 /STRING
+   #    REPEAT
+   #    2DROP ;
+   header d_number, "DNUMBER", 0
+4: call  to_number
+   call  dup
+   branch 4f
+   call  over
+   call  c_fetch
+   call  separator_question
+   call  zero_equals
+   branch 5f
+   call  huh_question
+5: literal 1
+   call  slash_string
+   jmp   4b
+4: call  two_drop
+   ret
+
+   # : NUMBER ( a-n0|Nt)
+   #    COUNT
+   #    OVER C@ '-' =  DUP IF 1 /STRING THEN  >R
+   #    0. 2SWAP >NUMBER
+   #    DUP IF 2NUMBER -1 ELSE 2DROP 0 THEN
+   #    R> IF DNEGATE THEN
+   #    DUP 0= IF NIP THEN ;
+   header number, "NUMBER", 0
+   call  count
+   call  over
+   call  c_fetch
+   literal '-'
+   call  equals
+   call  dup
+   branch 4f
+   literal 1
+   call  slash_string
+4: call  to_r
+   two_literal_zero
+   call  two_swap
+   call  to_number
+   call  dup
+   branch 4f
+   call  d_number
+   literal -1
+   jmp   5f
+4: call  two_drop
+   literal_zero
+5: call  r_from
+   branch 4f
+   call  d_negate
+4: call  dup
+   call  zero_equals
+   branch 4f
+   call  nip
+4: ret
+
+   # : LIT-TOS ( n)
+   #    ?DUP IF
+   #       $B8 CCODE, CODE,              \ mov eax, n
+   #    ELSE
+   #       $31 CCODE, $C0 CCODE,         \ xor eax, eax
+   #    THEN ;
+   header lit_tos, "LIT-TOS", 0
+   call  question_dup
+   branch 4f
+   literal 0xB8
+   call  c_code_comma
+   call  code_comma
+   jmp   5f
+4: literal 0x31
+   call  c_code_comma
+   literal 0xC0
+   call  c_code_comma
+5: ret
+
+   # : LITERAL ( n)
+   #    $83 CCODE, $EB CCODE, $04 CCODE, \ sub ebx, 4
+   #    $89 CCODE, $03 CCODE,            \ mov [ebx], eax
+   #    LIT-TOS ; IMMEDIATE
+   header literal, "LITERAL", IMM
+   literal 0x83
+   call  c_code_comma
+   literal 0xEB
+   call  c_code_comma
+   literal 0x04
+   call  c_code_comma
+   literal 0x89
+   call  c_code_comma
+   literal 0x03
+   call  c_code_comma
+   call  lit_tos
+   ret
+
+   # : 2LITERAL ( N)
+   #    $83 CCODE, $EB CCODE, $08 CCODE, \ sub ebx, 8
+   #    $89 CCODE, $43 CCODE, $04 CCODE, \ mov [ebx+4], eax
+   #    2DUP D0= IF
+   #       2DROP
+   #       $31 CCODE, $C0 CCODE,         \ xor eax, eax
+   #       $89 CCODE, $03 CCODE,         \ mov [ebx], eax
+   #    ELSE
+   #       SWAP ?DUP IF
+   #          $B9 CCODE, CODE,          \ mov ecx, n
+   #       ELSE
+   #          $31 CCODE, $C9 CCODE,      \ xor ecx, ecx
+   #       THEN
+   #       $89 CCODE, $0B CCODE,         \ mov [ebx], ecx
+   #       LIT-TOS
+   #    THEN ; IMMEDIATE
+   header two_literal, "2LITERAL", IMM
+   literal 0x83
+   call  c_code_comma
+   literal 0xEB
+   call  c_code_comma
+   literal 0x08
+   call  c_code_comma
+   literal 0x89
+   call  c_code_comma
+   literal 0x43
+   call  c_code_comma
+   literal 0x04
+   call  c_code_comma
+   call  two_dup
+   call  d_zero_equals
+   branch 4f
+   call  two_drop
+   literal 0x31
+   call  c_code_comma
+   literal 0xC0
+   call  c_code_comma
+   literal 0x89
+   call  c_code_comma
+   literal 0x03
+   call  c_code_comma
+   jmp   5f
+4: call  swap
+   call  question_dup
+   branch 6f
+   literal 0xB9
+   call  c_code_comma
+   literal 0xB9
+   call  code_comma
+   jmp 7f
+6: literal 0x31
+   call  c_code_comma
+   literal 0xC9
+   call  c_code_comma
+7: literal 0x89
+   call  c_code_comma
+   literal 0x0B
+   call  c_code_comma
+   call  lit_tos
+5: ret
+
+   # : NUMBER, ( a)
+   #    NUMBER IF
+   #       POSTPONE 2LITERAL
+   #    ELSE
+   #       POSTPONE LITERAL
+   #    THEN ;
+   header number_comma, "NUMBER,", 0
+   call  number
+   branch 4f
+   call  two_literal
+   jmp   5f
+4: call  literal
+5: ret
 
    # : QUIT
    #    SP0 4 -  SP!
@@ -916,9 +1141,9 @@
    #       STATE @ IF
    #          CASE -1 OF  EXECUTE   ENDOF
    #                1 OF  COMPILE,  ENDOF
-   #               DROP   NUMBER,   END-CASE
+   #               DROP   NUMBER,   ENDCASE
    #       ELSE
-   #          IF EXECUTE ELSE NUMBER THEN
+   #          IF EXECUTE ELSE NUMBER DROP THEN
    #       THEN
    #    AGAIN ;
    header quit, "QUIT", 0
@@ -950,6 +1175,7 @@
    jmp   6f
 7:
    call  number
+   call  drop
 6:
    jmp   4b
    ret
