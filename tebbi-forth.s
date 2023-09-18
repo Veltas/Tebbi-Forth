@@ -514,10 +514,30 @@
    call  swap
    ret
 
+   # : DIGIT>NUMBER ( c-n|100)
+   #    DUP 'a' < 0= IF
+   #       'a' - 'A' +
+   #    THEN
+   #    DUP 'A' 'Z' 1+ WITHIN IF
+   #       'A' - 10 +
+   #    ELSE  DUP '0' '9' 1+ WITHIN IF
+   #       '0' -
+   #    ELSE
+   #       DROP 100 EXIT
+   #    THEN ;
+
+   # : DIGIT? ( c-?)  DIGIT>NUMBER BASE @ < ;
+   header digit_question, "DIGIT?", 0
+   call  digit_to_number
+   call  base
+   call  fetch
+   call  less_than
+   ret
+
    # : >NUMBER ( Nan-Nan)
    #    BEGIN
    #       DUP WHILE
-   #       OVER C@ IS-DIGIT? WHILE
+   #       OVER C@ DIGIT? WHILE
    #       OVER C@ DIGIT>NUMBER >R
    #       2SWAP BASE @ UM* R> 0 D+ 2SWAP
    #    REPEAT THEN ;
@@ -526,7 +546,7 @@
    branch 4f
    call  over
    call  c_fetch
-   call  is_digit_question
+   call  digit_question
    branch 4f
    call  over
    call  c_fetch
