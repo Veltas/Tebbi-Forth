@@ -222,6 +222,14 @@
    mov   %edx, %eax
    ret
 
+   header minus_rot, "-ROT", 0
+   mov   (%ebx), %ecx
+   mov   4(%ebx), %edx
+   mov   %eax, 4(%ebx)
+   mov   %edx, (%ebx)
+   mov   %ecx, %eax
+   ret
+
    header nip, "NIP", 0
    add   $4, %ebx
    ret
@@ -495,6 +503,15 @@
    lea   1(%eax), %ecx
    mov   %ecx, (%ebx)
    movzxb (%eax), %eax
+   ret
+
+   # : /STRING ( ann-an)   TUCK - -ROT + SWAP ;
+   header slash_string, "/STRING", 0
+   call  tuck
+   call  minus
+   call  minus_rot
+   call  plus
+   call  swap
    ret
 
    # : ALIGN   HERE ALIGNED H ! ;
