@@ -921,8 +921,8 @@
    #    TIB >IN @ + SWAP
    #    >IN @ SWAP
    #    BEGIN
-   #       PEEK-IN ?DUP WHILE
-   #       OVER <> WHILE
+   #       PEEK-IN WHILE
+   #       DUP PEEK-IN <> WHILE
    #       1 >IN +!
    #    REPEAT THEN
    #    DROP
@@ -937,9 +937,9 @@
    call  fetch
    call  swap
 4: call  peek_in
-   call  question_dup
    branch 4f
-   call  over
+   call  dup
+   call  peek_in
    call  not_equals
    branch 4f
    literal 1
