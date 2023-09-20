@@ -1052,6 +1052,7 @@
    call  key
    call  dup
    literal 10
+   call  not_equals
    branch 4f
    call  tib
    call  number_tib
@@ -1080,8 +1081,8 @@
    #       REFILL DROP
    #    REPEAT ;
    header get, "GET", 0
-5: literal_zero
-   call  drop
+   literal_zero
+5: call  drop
    call  bl
    call  word
    call  dup
