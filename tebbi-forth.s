@@ -167,9 +167,8 @@
    mov   $4, %eax
    mov   (%ebx), %edx
    mov   4(%ebx), %ecx
-   mov   (%esp), %ebx
+   pop   %ebx
    int   $0x80
-   pop   %ecx
    pop   %ebx
    add   $8, %ebx
    ret
@@ -178,11 +177,10 @@
    push  %ebx
    push  %eax
    mov   $3, %eax
-   mov   (%ebx), %edx
    mov   4(%ebx), %ecx
-   mov   (%esp), %ebx
+   mov   (%ebx), %edx
+   pop   %ebx
    int   $0x80
-   pop   %ecx
    pop   %ebx
    add   $8, %ebx
    ret
@@ -457,14 +455,14 @@
    header store, "!", 0
    mov   (%ebx), %ecx
    mov   %ecx, (%eax)
-   mov   %eax, 4(%ebx)
+   mov   4(%ebx), %eax
    sub   $8, %ebx
    ret
 
    header c_store, "C!", 0
    mov   (%ebx), %ecx
    mov   %cl, (%eax)
-   mov   %eax, 4(%ebx)
+   mov   4(%ebx), %eax
    sub   $8, %ebx
    ret
 
@@ -478,7 +476,7 @@
    header aligned, "ALIGNED", 0
    dec   %eax
    and   $-4, %eax
-   inc   %eax
+   add   $4, %eax
    ret
 
    header execute, "EXECUTE", 0
@@ -541,6 +539,8 @@
    rep movsb
    mov   8(%ebx), %eax
    add   $12, %ebx
+   pop   %edi
+   pop   %esi
    ret
 
    header cmove_up, "CMOVE>", 0
@@ -554,6 +554,8 @@
    cld
    mov   8(%ebx), %eax
    add   $12, %ebx
+   pop   %edi
+   pop   %esi
    ret
 
    header count, "COUNT", 0
@@ -873,8 +875,7 @@
    call  plus
    call  c_fetch
    jmp   5f
-4: branch 5f
-   literal_zero
+4: literal_zero
 5: ret
 
    # : GET-IN ( c|0)   PEEK-IN  DUP IF  1 >IN +!  THEN ;
@@ -1027,7 +1028,7 @@
    #    0 #TIB !
    #    0
    #    BEGIN
-   #       #TIB @ TIB-SIZE @ < WHILE
+   #       #TIB @ TIB-SIZE < WHILE
    #       DROP KEY
    #       DUP 10 <> WHILE
    #       TIB #TIB @ + C!
@@ -1045,7 +1046,6 @@
 4: call  number_tib
    call  fetch
    call  tib_size
-   call  fetch
    call  less_than
    branch 4f
    call  drop
