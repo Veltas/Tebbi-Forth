@@ -141,6 +141,7 @@
    variable c_here, "CHERE", c_here_init
    variable h, "H", h_init
    variable state, "STATE", 0
+   variable base, "BASE", 10
    variable current, "CURRENT", forth_wordlist__data
    variable forth_wordlist, "FORTH-WORDLIST", last_def
    .long 0
@@ -253,6 +254,14 @@
    add   $8, %ebx
    ret
 
+   header two_swap, "2SWAP", 0
+   mov   8(%ebx), %ecx
+   mov   (%ebx), %edx
+   xchg  4(%ebx), %eax
+   mov   %ecx, (%ebx)
+   mov   %edx, 8(%ebx)
+   ret
+
    header to_r, ">R", 0
    pop   %ecx
    push  %eax
@@ -294,8 +303,49 @@
    add   $4, %ebx
    ret
 
+   header d_plus, "D+", 0
+   mov   (%ebx), %ecx
+   add   %ecx, 8(%ebx)
+   adc   4(%ebx), %eax
+   add   $8, %ebx
+   ret
+
+   header d_minus, "D-", 0
+   mov   (%ebx), %ecx
+   sub   %ecx, 8(%ebx)
+   mov   4(%ebx), %ecx
+   sbb   %eax, %ecx
+   mov   %ecx, %eax
+   add   $8, %ebx
+   ret
+
+   header negate, "NEGATE", 0
+   neg   %eax
+   ret
+
+   header d_negate, "DNEGATE", 0
+   xor   %ecx, %ecx
+   negl  (%ebx)
+   sbb   %eax, %ecx
+   mov   %ecx, %eax
+   ret
+
    header star, "*", 0
    mull  (%ebx)
+   add   $4, %ebx
+   ret
+
+   # CODE UM* ( Nn-N)
+   header u_m_star, "UM*", 0
+   mov   %eax, %ecx
+   mov   4(%ebx), %eax
+   mul   %ecx
+   mov   %eax, 4(%ebx)
+   mov   (%ebx), %eax
+   push  %edx
+   mul   %ecx
+   pop   %edx
+   add   %edx, %eax
    add   $4, %ebx
    ret
 
@@ -303,6 +353,14 @@
    mov   %eax, %ecx
    xor   %eax, %eax
    or    %ecx, %ecx
+   setz  %al
+   neg   %eax
+   ret
+
+   header d_zero_equals, "D0=", 0
+   mov   %eax, %ecx
+   xor   %eax, %eax
+   or    (%ebx), %ecx
    setz  %al
    neg   %eax
    ret
@@ -505,6 +563,20 @@
    movzxb (%eax), %eax
    ret
 
+   header within, "WITHIN", 0
+   push  %esi
+   mov   4(%ebx), %edx
+   mov   (%ebx), %ecx
+   xor   %esi, %esi
+   sub   %ecx, %edx
+   sub   %ecx, %eax
+   cmp   %eax, %edx
+   mov   %esi, %eax
+   setb  %al
+   neg   %eax
+   pop   %esi
+   ret
+
    # : /STRING ( ann-an)   TUCK - -ROT + SWAP ;
    header slash_string, "/STRING", 0
    call  tuck
@@ -525,6 +597,40 @@
    #    ELSE
    #       DROP 100 EXIT
    #    THEN ;
+   header digit_to_number, "DIGIT>NUMBER", 0
+   call  dup
+   literal 'a'
+   call  less_than
+   call  zero_equals
+   branch 4f
+   literal 'a'
+   call  minus
+   literal 'A'
+   call  plus
+4: call  dup
+   literal 'A'
+   literal 'Z'
+   call  one_plus
+   call  within
+   branch 4f
+   literal 'A'
+   call  minus
+   literal 10
+   call  plus
+   jmp   5f
+4: call  dup
+   literal '0'
+   literal '9'
+   call  one_plus
+   call  within
+   branch 6f
+   literal '0'
+   call  minus
+   jmp   5f
+6: call  drop
+   literal 100
+   ret
+5: ret
 
    # : DIGIT? ( c-?)  DIGIT>NUMBER BASE @ < ;
    header digit_question, "DIGIT?", 0
@@ -1261,19 +1367,11 @@
 
    .globl start
    header start, "START", 0
-   mov   %esp, (args__data)
-   mov   %esp, (rp0__data)
-   mov   $4, %eax
-   mov   $1, %ebx
-   mov   $5f, %ecx
-   mov   $6f-5f, %edx
-   int   $0x80
+   mov   %esp, args__data
+   mov   %esp, rp0__data
+   xor   %eax, %eax
+   mov   $sp0_init, %ebx
    jmp   quit
-   ret
-   .section .rodata
-5:
-   .ascii "hi "
-6:
 
    # Allocate room for runtime-generated code in modifiable,
    # executable page.
