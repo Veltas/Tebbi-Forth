@@ -577,6 +577,7 @@
    setb  %al
    neg   %eax
    pop   %esi
+   add   $8, %ebx
    ret
 
    # : /STRING ( ann-an)   TUCK - -ROT + SWAP ;
@@ -648,6 +649,7 @@
    #       OVER C@ DIGIT? WHILE
    #       OVER C@ DIGIT>NUMBER >R
    #       2SWAP BASE @ UM* R> 0 D+ 2SWAP
+   #       1 /STRING
    #    REPEAT THEN ;
    header to_number, ">NUMBER", 0
 4: call  dup
@@ -668,6 +670,8 @@
    literal_zero
    call  d_plus
    call  two_swap
+   literal 1
+   call  slash_string
    jmp   4b
 4: ret
 
@@ -820,6 +824,7 @@
    #          SWAP IMM? IF -1 ELSE 1 THEN
    #          EXIT
    #       THEN
+   #       @
    #    REPEAT ;
    header find_tick, "FIND'", 0
    call  current
@@ -846,7 +851,8 @@
 6: branch 7f
    literal 1
 7: ret
-5: jmp 4b
+5: call  fetch
+   jmp 4b
 4: ret
 
    # : FIND ( a - a 0 | e 1 | e -1 )   'FIND @ EXECUTE ;
