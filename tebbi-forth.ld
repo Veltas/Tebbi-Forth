@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Christopher Leonard
+ * Tebbi Forth - Copyright (c) 2023 Christopher Leonard
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated

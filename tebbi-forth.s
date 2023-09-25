@@ -1,4 +1,4 @@
-# Copyright (c) 2023 Christopher Leonard
+# Tebbi Forth - Copyright (c) 2023 Christopher Leonard
 #
 # Permission is hereby granted, free of charge, to any person
 # obtaining a copy of this software and associated documentation
@@ -105,19 +105,20 @@
    .endm
 
    .macro branch, else
-   mov   %eax, %ecx
+   or    %eax, %eax
    mov   (%ebx), %eax
-   add   $4, %ebx
-   or    %ecx, %ecx
+   lea   4(%ebx), %ebx
    jz    \else
    .endm
 
    .macro raw_of, endof
-   mov   %eax, %ecx
-   mov   (%ebx), %eax
-   add   $4, %ebx
    cmp   (%ebx), %eax
-   jne   \endof
+   je    1f
+   mov   (%ebx), %eax
+   lea   4(%ebx), %ebx
+   jmp   \endof
+1: mov   4(%ebx), %eax
+   lea   8(%ebx), %ebx
    .endm
 
    .macro string, content
@@ -143,8 +144,6 @@
    variable state, "STATE", 0
    variable base, "BASE", 10
    variable current, "CURRENT", forth_wordlist__data
-   variable forth_wordlist, "FORTH-WORDLIST", last_def
-   .long 0
    variable to_in, ">IN", 0
    variable number_tib, "\#TIB", 0
    variable exit_code, "EXIT-CODE", 0
@@ -154,6 +153,8 @@
    variable tib, "TIB", 0
    .space   TIB_SIZE - 4
 
+   value forth_wordlist, "FORTH-WORDLIST", last_def
+   .long 0
    value rp0, "RP0", 0
 
    header bye, "BYE", 0
@@ -161,6 +162,7 @@
    mov   (exit_code__data), %ebx
    int   $0x80
 
+   # CODE SYS-WRITE ( ann-n)
    header sys_write, "SYS-WRITE", 0
    push  %ebx
    push  %eax
@@ -173,6 +175,7 @@
    add   $8, %ebx
    ret
 
+   # CODE SYS-READ ( ann-n)
    header sys_read, "SYS-READ", 0
    push  %ebx
    push  %eax
@@ -301,6 +304,7 @@
    add   $4, %ebx
    ret
 
+   # CODE D+ ( NN-N)
    header d_plus, "D+", 0
    mov   (%ebx), %ecx
    add   %ecx, 8(%ebx)
@@ -456,21 +460,21 @@
    mov   (%ebx), %ecx
    mov   %ecx, (%eax)
    mov   4(%ebx), %eax
-   sub   $8, %ebx
+   add   $8, %ebx
    ret
 
    header c_store, "C!", 0
    mov   (%ebx), %ecx
    mov   %cl, (%eax)
    mov   4(%ebx), %eax
-   sub   $8, %ebx
+   add   $8, %ebx
    ret
 
    header plus_store, "+!", 0
    mov   (%ebx), %ecx
    add   %ecx, (%eax)
    mov   4(%ebx), %eax
-   sub   $8, %ebx
+   add   $8, %ebx
    ret
 
    header aligned, "ALIGNED", 0
@@ -565,6 +569,7 @@
    movzxb (%eax), %eax
    ret
 
+   # CODE WITHIN ( nnn-?)
    header within, "WITHIN", 0
    push  %esi
    mov   4(%ebx), %edx
@@ -598,8 +603,8 @@
    #    ELSE  DUP '0' '9' 1+ WITHIN IF
    #       '0' -
    #    ELSE
-   #       DROP 100 EXIT
-   #    THEN ;
+   #       DROP 100
+   #    THEN THEN ;
    header digit_to_number, "DIGIT>NUMBER", 0
    call  dup
    literal 'a'
@@ -632,7 +637,6 @@
    jmp   5f
 6: call  drop
    literal 100
-   ret
 5: ret
 
    # : DIGIT? ( c-?)  DIGIT>NUMBER BASE @ < ;
@@ -848,8 +852,7 @@
    branch 6f
    literal -1
    jmp   7f
-6: branch 7f
-   literal 1
+6: literal 1
 7: ret
 5: call  fetch
    jmp 4b
@@ -1032,8 +1035,8 @@
    # : REFILL' ( -?)
    #    0 >IN !
    #    0 #TIB !
-   #    0
    #    BEGIN
+   #       0
    #       #TIB @ TIB-SIZE < WHILE
    #       DROP KEY
    #       DUP 10 <> WHILE
@@ -1048,8 +1051,8 @@
    literal_zero
    call  number_tib
    call  store
-   literal_zero
-4: call  number_tib
+4: literal_zero
+   call  number_tib
    call  fetch
    call  tib_size
    call  less_than
@@ -1124,7 +1127,7 @@
 4: literal ':'
    raw_of 4f
    jmp   5f
-   call  drop
+4: call  drop
    literal_zero
    ret
 5: literal -1
