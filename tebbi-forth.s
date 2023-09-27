@@ -105,7 +105,7 @@
    .endm
 
    .macro branch, else
-   or    %eax, %eax
+   test  %eax, %eax
    mov   (%ebx), %eax
    lea   4(%ebx), %ebx
    jz    \else
@@ -935,7 +935,8 @@
    #       1 >IN +!
    #    REPEAT THEN
    #    DROP
-   #    >IN @ SWAP - ;
+   #    >IN @ SWAP -
+   #    GET-IN DROP ;
    header parse, "PARSE", 0
    call  tib
    call  to_in
@@ -960,6 +961,8 @@
    call  fetch
    call  swap
    call  minus
+   call  get_in
+   call  drop
    ret
 
    # : WORD ( c-a)
@@ -985,41 +988,6 @@
    call  tick_word
    ret
 
-   # : -CREATE ( -a)
-   #    BL WORD
-   #    DUP 0= ABORT" expected name"
-   #    ALIGN  HERE SWAP  CURRENT @ @ ,  CALIGN CHERE @ ,
-   #    C@ ALLOT ALIGN ;
-   header dash_create, "-CREATE", 0
-   call  bl
-   call  word
-   call  dup
-   call  zero_equals
-   string "expected name"
-   call  raw_abort_quote
-   call  align
-   call  here
-   call  swap
-   call  current
-   call  fetch
-   call  fetch
-   call  comma
-   call  c_align
-   call  c_here
-   call  fetch
-   call  comma
-   call  c_fetch
-   call  allot
-   call  align
-   ret
-
-   # : LINK ( a)   CURRENT @ ! ;
-   header link, "LINK", 0
-   call  current
-   call  fetch
-   call  store
-   ret
-
    # : KEY ( -c)   0 >R RP' 1 STDIN SYS-READ DROP R> ;
    header key, "KEY", 0
    literal_zero
@@ -1033,6 +1001,7 @@
    ret
 
    # : REFILL' ( -?)
+   #    CR
    #    0 >IN !
    #    0 #TIB !
    #    BEGIN
@@ -1045,6 +1014,7 @@
    #    REPEAT THEN
    #    DROP -1 ;
    header refill_tick, "REFILL'", 0
+   call  cr
    literal_zero
    call  to_in
    call  store
@@ -1318,6 +1288,7 @@
    # : QUIT
    #    SP0 4 -  SP!
    #    0 STATE !
+   #    REFILL DROP
    #    BEGIN
    #       GET FIND
    #       STATE @ IF
@@ -1336,6 +1307,8 @@
    literal_zero
    call  state
    call  store
+   call  refill
+   call  drop
 4: call  get
    call  find
    call  state
@@ -1369,12 +1342,6 @@
    call  quit
    ret
 
-   # : EXIT   0xC1 CCODE, ; IMMEDIATE
-   header exit, "EXIT", IMM
-   literal 0xC3
-   call  c_code_comma
-   ret
-
    .globl start
    header start, "START", 0
    mov   %esp, args__data
@@ -1382,6 +1349,66 @@
    xor   %eax, %eax
    mov   $sp0_init, %ebx
    jmp   quit
+
+   # : ]   1 STATE ! ;
+   header right_bracket, "]", 0
+   literal 1
+   call  state
+   call  store
+   ret
+
+   # : [   0 STATE ! ; IMMEDIATE
+   header left_bracket, "[", IMM
+   literal_zero
+   call  state
+   call  store
+   ret
+
+   # : CREATE' ( -a)
+   #    BL WORD
+   #    DUP C@ 0= ABORT" expected name"
+   #    ALIGN  HERE SWAP  CURRENT @ @ ,  CALIGN CHERE @ ,
+   #    C@ ALLOT ALIGN ;
+   header create_tick, "CREATE'", 0
+   call  bl
+   call  word
+   call  dup
+   call  c_fetch
+   call  zero_equals
+   string "expected name"
+   call  raw_abort_quote
+   call  align
+   call  here
+   call  swap
+   call  current
+   call  fetch
+   call  fetch
+   call  comma
+   call  c_align
+   call  c_here
+   call  fetch
+   call  comma
+   call  c_fetch
+   call  allot
+   call  align
+   ret
+
+   # : EXIT   0xC1 CCODE, ; IMMEDIATE
+   header exit, "EXIT", IMM
+   literal 0xC3
+   call  c_code_comma
+   ret
+
+   # : ' ( -e)
+   #    BL WORD  FIND 0= IF HUH? THEN ;
+   header tick, "\'", 0
+   call  bl
+   call  word
+   call  find
+   call  zero_equals
+   branch 4f
+   call  huh_question
+4: ret
 
    # Allocate room for runtime-generated code in modifiable,
    # executable page.
